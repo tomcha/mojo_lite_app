@@ -1,0 +1,66 @@
+#!/usr/bin/env perl
+
+use Mojolicious::Lite;
+use lib './lib';
+use Tweet;
+use Data::Dumper;
+use utf8;
+
+binmode STDIN,":encoding(UTF8)";
+binmode STDOUT,":utf8";
+
+our $tweets = ();
+get '/' => sub {
+    my $self = shift;
+    $self->render('index');
+};
+
+post '/speak' => sub{
+    my $self = shift;
+    my $twitter_user = $self->param('text');
+    my $instance = Tweet->new($twitter_user);
+    $tweets = $instance->get_tweets;
+    print Dumper $tweets;
+    $self->stash(tweets => $tweets);
+    $self->render('speak');
+};
+
+get '/speak' => sub {
+    my $self = shift;
+    my $text = $self->param('name');
+#    `say -v kyoko $text`;
+    `say -v otoya $text`;
+    $self->stash(tweets => $tweets);
+    $self->render('speak');
+};
+
+app->start;
+__DATA__
+
+@@ index.html.ep
+% layout 'default';
+% title 'sample';
+<form action='/speak' method='post'>
+    <input type='text' name='text'>
+    <input type='submit' name='name' value='ボタンを作る'>
+</form>
+
+@@ speak.html.ep
+% layout 'default';
+%title 'speach button';
+<form action='/speak' method='get'>
+% for my $tweet (@{$tweets}){
+    <input type='submit' name='name' value=<%=$tweet %>>
+%};
+</form>
+</br>
+<form action='/' method='get'>
+    <input type='submit' name='return' value='戻る'>
+</form>
+
+@@ layouts/default.html.ep
+<!DOCTYPE html>
+<html>
+  <head><title><%= title %></title></head>
+  <body><%= content %></body>
+</html>
